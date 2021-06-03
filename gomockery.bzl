@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_context", "go_path", "go_rule")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_context", "go_path")
 load("@io_bazel_rules_go//go/private:providers.bzl", "GoLibrary", "GoPath", "GoSource")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
@@ -11,6 +11,7 @@ _MOCKS_GOPATH_LABEL = "_mocks_gopath"
 
 def go_mockery(src, importpath, interfaces, visibility, **kwargs):
     mocks_name = kwargs.get("mocks_name", _MOCKS_DEFAULT_LABEL)
+    deps = kwargs.get("deps", [])
 
     go_mockery_without_library(
         name = mocks_name,
@@ -26,8 +27,7 @@ def go_mockery(src, importpath, interfaces, visibility, **kwargs):
         name = kwargs.get("name", _LIB_DEFAULT_LABEL),
         srcs = [mocks_name],
         importpath = importpath,
-        deps = [
-            mocks_name,
+        deps = deps + [
             kwargs.get("testify_mock_lib", _TESTIFY_MOCK_LIB),
         ],
         visibility = visibility,
@@ -59,18 +59,19 @@ def go_mockery_without_library(src, interfaces, visibility, **kwargs):
     )
 
 def _go_mockery_impl(ctx):
-    args = ["-dir", "$GOPATH/src/" + ctx.attr.src[GoLibrary].importpath]
+    gopath = ctx.var["BINDIR"] + "/" + ctx.attr.gopath_dep[GoPath].gopath
+    args =  ["-dir", gopath + "/src/" + ctx.attr.src[GoLibrary].importpath]
     args += ["-outpkg", ctx.attr.outpkg]
     args += ["-output", ctx.outputs.outputs[0].dirname ]
-    args += ["-name", "\"" + "|".join(ctx.attr.interfaces) + "\""]
+    args += ["-name", "" + "|".join(ctx.attr.interfaces) + ""]
     args += ["-case", ctx.attr.case]
 
     _go_tool_run_shell_stdout(
         ctx = ctx,
         cmd = ctx.file.mockery_tool,
         args = args,
-        extra_inputs = ctx.attr.src[GoSource].srcs,
-        outputs = ctx.outputs.outputs
+        extra_inputs =  ctx.attr.src[GoSource].srcs,
+        outputs = ctx.outputs.outputs,
     )
 
     go = go_context(ctx)
@@ -83,11 +84,11 @@ def _go_mockery_impl(ctx):
         ),
     ]
 
-_go_mockery = go_rule(
-    _go_mockery_impl,
+_go_mockery = rule(
+    implementation = _go_mockery_impl,
     attrs = {
         "src": attr.label(
-            doc = "The Go package of which the sources define the interfaces for which to generate mocks.",
+            doc = "The Go library where the interfaces being mocked are defined",
             providers = [GoLibrary, GoSource],
             mandatory = True,
         ),
@@ -127,39 +128,34 @@ _go_mockery = go_rule(
             cfg = "host",
             mandatory = False,
         ),
-    }
+    },
+    toolchains = ["@io_bazel_rules_go//go:toolchain"],
 )
 
 def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
     go_ctx = go_context(ctx)
     gopath = "$(pwd)/" + ctx.var["BINDIR"] + "/" + ctx.attr.gopath_dep[GoPath].gopath
 
-    inputs = [cmd, go_ctx.go] + (
+    inputs = [ctx.file.mockery_tool, go_ctx.go] + (
         ctx.attr.gopath_dep.files.to_list() +
         go_ctx.sdk.headers + go_ctx.sdk.srcs + go_ctx.sdk.tools
-    ) + extra_inputs
+    )
 
     # We can use the go binary from the stdlib for most of the environment
     # variables, but our GOPATH is specific to the library target we were given.
     # We also, unfortunately, need to do some dirty & porcelain sed'ing on the
     # generated mock files as their import header will be messed up.
     ctx.actions.run_shell(
-        outputs = outputs,
         inputs = inputs,
+        outputs = outputs,
+        tools = [cmd],
         command = """
-           $PWD/{godir}/go env >go_env.txt &&
-           source go_env.txt &&
-           export $(cut -d= -f1 go_env.txt) &&
-           export PATH=$GOROOT/bin:$PWD/{godir}:$PATH &&
-           export GOPATH={gopath} &&
-           export GOPACKAGESPRINTGOLISTERRORS=true &&
-           # TODO(zplin): Hack required to enable the default go/packages driver.
-           # This may or not may not be necessary with Go 1.12.
-           # For details, see https://github.com/golang/go/issues/30355.
-           mkdir -p bazel-out/_tmp/go-cache &&
-           export GOCACHE=$PWD/bazel-out/_tmp/go-cache &&
-           {cmd} {args} &&
-           sed -E -i.bak -e 's@"[^"]+{godep}/src/([^"]+)/"@"\\1"@g' {outfiles}
+            export GOPATH={gopath} &&
+            source <($PWD/{godir}/go env) &&
+            export GOROOT=`$PWD/{godir}/go env GOROOT` &&
+            export PATH=$GOROOT/bin:$PWD/{godir}:$PATH &&
+            export GOCACHE=$PWD/gocache &&
+            {cmd} {args}
         """.format(
             godep = ctx.attr.gopath_dep[GoPath].gopath,
             godir = go_ctx.go.path[:-1 - len(go_ctx.go.basename)],
