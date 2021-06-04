@@ -1,3 +1,8 @@
+This repository is forked from Helcaraxan's old build rule, which was no longer compatible with the
+newer versions of Bazel and Go. It currently uses an older version of mockery, which does not rely
+on Go Modules. Possibly there will be an upgrade in the future to make this work with 
+go modules and mockery v2.
+
 # Bazel rules for using mockery
 
 This is a relatively quick-and-dirty approach to try and bazelify Golang mocks generation using the
