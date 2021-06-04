@@ -139,7 +139,7 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
     inputs = [ctx.file.mockery_tool, go_ctx.go] + (
         ctx.attr.gopath_dep.files.to_list() +
         go_ctx.sdk.headers + go_ctx.sdk.srcs + go_ctx.sdk.tools
-    )
+    ) + extra_inputs
 
     # We can use the go binary from the stdlib for most of the environment
     # variables, but our GOPATH is specific to the library target we were given.
@@ -151,10 +151,11 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
         tools = [cmd],
         command = """
             export GOPATH={gopath} &&
+            export GO111MODULE=off &&
             source <($PWD/{godir}/go env) &&
             export GOROOT=`$PWD/{godir}/go env GOROOT` &&
             export PATH=$GOROOT/bin:$PWD/{godir}:$PATH &&
-            export GOCACHE=$PWD/gocache &&
+            export GOCACHE=$GOPATH/pkg &&
             {cmd} {args}
         """.format(
             godep = ctx.attr.gopath_dep[GoPath].gopath,

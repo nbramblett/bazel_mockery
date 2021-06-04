@@ -1,6 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//:gomockery.bzl", "go_mockery")
-load("//:stringer.bzl", "go_generate_stringer")
 
 go_library(
   name = "go_default_library",
@@ -17,8 +16,13 @@ go_mockery(
   interfaces = [ "Stringy" ],
 )
 
-go_generate_stringer(
-  name = "stringz",
-  library = "go_default_library",
-  type = "Stringy"
+go_test(
+  name = "go_default_test",
+  srcs = [ "interface_test.go" ],
+  visibility = [ "//visibility:public"],
+  deps = [
+    ":go_default_library",
+    ":mock_lib",
+    "@com_github_stretchr_testify//mock"
+  ],
 )
