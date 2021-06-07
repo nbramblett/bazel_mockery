@@ -15,7 +15,10 @@ go_mockery(
     name = "mock_lib",
     src = ":testgo",
     importpath = "testgo/mocks",
-    interfaces = ["Stringy"],
+    interfaces = [
+        "Stringy",
+        "privateStringy",
+    ],
 )
 
 go_test(
