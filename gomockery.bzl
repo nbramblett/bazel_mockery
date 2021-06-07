@@ -78,7 +78,7 @@ def _go_mockery_impl(ctx):
     args =  ["-dir", gopath + "/src/" + ctx.attr.src[GoLibrary].importpath]
     args += ["-outpkg", ctx.attr.outpkg]
     args += ["-output", ctx.outputs.outputs[0].dirname ]
-    args += ["-name", "|".join(ctx.attr.interfaces)]
+    args += ["-name", "\""+"|".join(ctx.attr.interfaces)+"\""]
     args += ["-case", "underscore"]
 
     _go_tool_run_shell_stdout(
