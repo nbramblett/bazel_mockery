@@ -55,7 +55,7 @@ def go_mockery_without_library(src, interfaces, **kwargs):
     interfaces = [ ifce.strip() for ifce in interfaces ]
 
     outpkg = kwargs.get("outpkg", "mocks")
-    genfiles = [ paths.join(outpkg, _interface_to_case(ifce) + ".go") for ifce in interfaces ]
+    genfiles = [ paths.join(outpkg, interface_to_case(ifce) + ".go") for ifce in interfaces ]
 
     go_path(
         name = _MOCKS_GOPATH_LABEL,
@@ -176,7 +176,7 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
 # https://github.com/vektra/mockery/blob/master/pkg/outputter.go
 # It is relatively challenging given the limitations of the Starlark
 # language: no regular expressions and no 'while' loops.
-def _interface_to_case(name):
+def interface_to_case(name):
     transformed = ""
     idx = -1
 
