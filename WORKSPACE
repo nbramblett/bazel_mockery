@@ -1235,12 +1235,6 @@ go_repository(
 gazelle_dependencies()
 
 go_repository(
-    name = "com_github_vektra_mockery",
-    importpath = "github.com/vektra/mockery",
-    tag = "e78b021dcbb558a8e7ac1fc5bc757ad7c277bb81",
-)
-
-go_repository(
     name = "com_github_stretchr_testify",
     importpath = "github.com/stretchr/testify",
     sum = "h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=",
