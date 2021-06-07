@@ -11,15 +11,15 @@ _MOCKS_GOPATH_LABEL = "_mocks_gopath"
 
 
 def go_mockery(src, importpath, interfaces, **kwargs):
-"""Runs Mockery on a Go library
-See https://github.com/vektra/mockery for details
+    """Runs Mockery on a Go library
+    See https://github.com/vektra/mockery for details
 
-Args:
-    src: The Go Library to use as a source target
-    importpath: The path which will be used in a Go file's import statement
-        in order to call the generated mock package
-    interfaces: The set of interfaces for which a mocked type will be generated
-"""
+    Args:
+        src: The Go Library to use as a source target
+        importpath: The path which will be used in a Go file's import statement
+            in order to call the generated mock package
+        interfaces: The set of interfaces for which a mocked type will be generated
+    """
     mocks_name = kwargs.get("mocks_name", _MOCKS_DEFAULT_LABEL)
     deps = kwargs.get("deps", [])
 
@@ -42,19 +42,19 @@ Args:
     )
 
 def go_mockery_without_library(src, interfaces, **kwargs):
-"""Runs Mockery on a Go library, but does not create a Go library.
-Useful for cases where the mock lib acts as an intermediate source in bazel,
-rather than a usable Go package.
-See https://github.com/vektra/mockery for details
+    """Runs Mockery on a Go library, but does not create a Go library.
+    Useful for cases where the mock lib acts as an intermediate source in bazel,
+    rather than a usable Go package.
+    See https://github.com/vektra/mockery for details
 
-Args:
-    src: The Go Library to use as a source target
-    interfaces: The set of interfaces for which a mocked type will be generated
-"""
+    Args:
+        src: The Go Library to use as a source target
+        interfaces: The set of interfaces for which a mocked type will be generated
+    """
     interfaces = [ ifce.strip() for ifce in interfaces ]
 
     outpkg = kwargs.get("outpkg", "mocks")
-    genfiles = [ paths.join(outpkg, _interface_to_case(ifce, case) + ".go") for ifce in interfaces ]
+    genfiles = [ paths.join(outpkg, _interface_to_case(ifce) + ".go") for ifce in interfaces ]
 
     go_path(
         name = _MOCKS_GOPATH_LABEL,
@@ -175,7 +175,7 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
 # https://github.com/vektra/mockery/blob/master/pkg/outputter.go
 # It is relatively challenging given the limitations of the Starlark
 # language: no regular expressions and no 'while' loops.
-def _interface_to_case(name, case):
+def _interface_to_case(name):
     transformed = ""
     idx = -1
 
