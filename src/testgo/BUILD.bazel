@@ -1,25 +1,25 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//:gomockery.bzl", "go_mockery")
 
+package(default_visibility = ["//visibility:private"])
+
 go_library(
   name = "go_default_library",
   srcs = [ "interface.go" ],
   importpath = "testgo",
-  visibility = [ "//visibility:public"]
+  visibility = ["//visibility:public"]
 )
 
 go_mockery(
   name = "mock_lib",
   src = ":go_default_library",
   importpath = "testgo/mocks",
-  visibility = [ "//visibility:public"],
   interfaces = [ "Stringy" ],
 )
 
 go_test(
   name = "go_default_test",
   srcs = [ "interface_test.go" ],
-  visibility = [ "//visibility:public"],
   deps = [
     ":go_default_library",
     ":mock_lib",

@@ -9,7 +9,7 @@ _LIB_DEFAULT_LABEL = "go_default_library"
 _MOCKS_DEFAULT_LABEL = "go_default_mocks"
 _MOCKS_GOPATH_LABEL = "_mocks_gopath"
 
-def go_mockery(src, importpath, interfaces, visibility, **kwargs):
+def go_mockery(src, importpath, interfaces, **kwargs):
     mocks_name = kwargs.get("mocks_name", _MOCKS_DEFAULT_LABEL)
     deps = kwargs.get("deps", [])
 
@@ -20,7 +20,6 @@ def go_mockery(src, importpath, interfaces, visibility, **kwargs):
         case = kwargs.get("case", "underscore"),
         outpkg = kwargs.get("outpkg", importpath.split("/")[-1]),
         mockery_tool = kwargs.get("mockery_tool", None),
-        visibility = visibility,
     )
 
     go_library(
@@ -30,10 +29,9 @@ def go_mockery(src, importpath, interfaces, visibility, **kwargs):
         deps = deps + [
             kwargs.get("testify_mock_lib", _TESTIFY_MOCK_LIB),
         ],
-        visibility = visibility,
     )
 
-def go_mockery_without_library(src, interfaces, visibility, **kwargs):
+def go_mockery_without_library(src, interfaces, **kwargs):
     interfaces = [ ifce.strip() for ifce in interfaces ]
 
     case = kwargs.get("case", "underscore")
@@ -55,7 +53,6 @@ def go_mockery_without_library(src, interfaces, visibility, **kwargs):
         outputs = genfiles,
         gopath_dep = _MOCKS_GOPATH_LABEL,
         mockery_tool = kwargs.get("mockery_tool", _MOCKERY_TOOL),
-        visibility = visibility,
     )
 
 def _go_mockery_impl(ctx):
