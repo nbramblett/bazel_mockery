@@ -9,7 +9,17 @@ _LIB_DEFAULT_LABEL = "go_default_library"
 _MOCKS_DEFAULT_LABEL = "go_default_mocks"
 _MOCKS_GOPATH_LABEL = "_mocks_gopath"
 
+
 def go_mockery(src, importpath, interfaces, **kwargs):
+"""Runs Mockery on a Go library
+See https://github.com/vektra/mockery for details
+
+Args:
+    src: The Go Library to use as a source target
+    importpath: The path which will be used in a Go file's import statement
+        in order to call the generated mock package
+    interfaces: The set of interfaces for which a mocked type will be generated
+"""
     mocks_name = kwargs.get("mocks_name", _MOCKS_DEFAULT_LABEL)
     deps = kwargs.get("deps", [])
 
@@ -32,9 +42,17 @@ def go_mockery(src, importpath, interfaces, **kwargs):
     )
 
 def go_mockery_without_library(src, interfaces, **kwargs):
+"""Runs Mockery on a Go library, but does not create a Go library.
+Useful for cases where the mock lib acts as an intermediate source in bazel,
+rather than a usable Go package.
+See https://github.com/vektra/mockery for details
+
+Args:
+    src: The Go Library to use as a source target
+    interfaces: The set of interfaces for which a mocked type will be generated
+"""
     interfaces = [ ifce.strip() for ifce in interfaces ]
 
-    case = kwargs.get("case", "underscore")
     outpkg = kwargs.get("outpkg", "mocks")
     genfiles = [ paths.join(outpkg, _interface_to_case(ifce, case) + ".go") for ifce in interfaces ]
 
@@ -48,7 +66,6 @@ def go_mockery_without_library(src, interfaces, **kwargs):
         name = kwargs.get("name", _MOCKS_DEFAULT_LABEL),
         src = src,
         interfaces = interfaces,
-        case = case,
         outpkg = outpkg,
         outputs = genfiles,
         gopath_dep = _MOCKS_GOPATH_LABEL,
@@ -61,7 +78,7 @@ def _go_mockery_impl(ctx):
     args += ["-outpkg", ctx.attr.outpkg]
     args += ["-output", ctx.outputs.outputs[0].dirname ]
     args += ["-name", "" + "|".join(ctx.attr.interfaces) + ""]
-    args += ["-case", ctx.attr.case]
+    args += ["-case", "underscore"]
 
     _go_tool_run_shell_stdout(
         ctx = ctx,
@@ -92,16 +109,6 @@ _go_mockery = rule(
         "interfaces": attr.string_list(
             doc = "The names of the Go interfaces for which to generate mocks. Unlike 'mockery' itself regular expressions are not accepted.",
             mandatory = True,
-        ),
-        "case": attr.string(
-            doc = "The casing of the generated mock filenames. Should be one of ('underscore', 'camel', 'snake')",
-            values = [
-                "camel",
-                "snake",
-                "underscore",
-            ],
-            default = "underscore",
-            mandatory = False,
         ),
         "outpkg": attr.string(
             doc = "Import name for the generated mocks package.",
@@ -165,13 +172,10 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, outputs):
     )
 
 # This transformation logic should mirror the one used in
-# https://github.com/vektra/mockery/tree/master/mockery/outputter.go
+# https://github.com/vektra/mockery/blob/master/pkg/outputter.go
 # It is relatively challenging given the limitations of the Starlark
 # language: no regular expressions and no 'while' loops.
 def _interface_to_case(name, case):
-    if case != "underscore":
-        return name
-
     transformed = ""
     idx = -1
 
