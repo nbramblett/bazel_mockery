@@ -1,7 +1,7 @@
 This repository is forked from Helcaraxan's old build rule, which was no longer compatible with the
-newer versions of Bazel and Go. It currently uses an older version of mockery, which does not rely
-on Go Modules. Possibly there will be an upgrade in the future to make this work with 
-go modules and mockery v2.
+newer versions of Bazel and Go. It now uses mockery/v2 and Go Modules to provide a more robust
+build rule. Test files are included. This is not really under active development atm but I'll try to
+handle any bugs that pop up as they're found.
 
 # Bazel rules for using mockery
 
