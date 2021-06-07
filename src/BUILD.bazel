@@ -4,7 +4,7 @@ go_binary(
     name = "main",
     srcs = [ "main.go" ],
     deps = [
-        "//src/testgo:go_default_library",
+        "//src/testgo:testgo",
     ],
 )
 

@@ -4,25 +4,25 @@ load("//:gomockery.bzl", "go_mockery")
 package(default_visibility = ["//visibility:private"])
 
 go_library(
-  name = "go_default_library",
-  srcs = [ "interface.go" ],
-  importpath = "testgo",
-  visibility = ["//visibility:public"]
+    name = "testgo",
+    srcs = ["interface.go"],
+    importpath = "src/testgo",
+    visibility = ["//visibility:public"],
 )
 
+# gazelle:resolve go testgo/mocks //src/testgo:mock_lib
 go_mockery(
-  name = "mock_lib",
-  src = ":go_default_library",
-  importpath = "testgo/mocks",
-  interfaces = [ "Stringy" ],
+    name = "mock_lib",
+    src = ":testgo",
+    importpath = "testgo/mocks",
+    interfaces = ["Stringy"],
 )
 
 go_test(
-  name = "go_default_test",
-  srcs = [ "interface_test.go" ],
-  deps = [
-    ":go_default_library",
-    ":mock_lib",
-    "@com_github_stretchr_testify//mock"
-  ],
+    name = "testgo_test",
+    srcs = ["interface_test.go"],
+    deps = [
+        "//src/testgo:mock_lib",
+        "@com_github_stretchr_testify//mock",
+    ],
 )

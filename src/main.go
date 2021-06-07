@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"testgo"
+
+	"src/testgo"
 )
 
 func main() {

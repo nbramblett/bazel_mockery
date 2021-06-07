@@ -6,22 +6,23 @@ _MOCKERY_TOOL = "@com_github_vektra_mockery//cmd/mockery:mockery"
 _TESTIFY_MOCK_LIB = "@com_github_stretchr_testify//mock:go_default_library"
 
 _LIB_DEFAULT_LABEL = "go_default_library"
-_MOCKS_DEFAULT_LABEL = "go_default_mocks"
+_MOCKS_DEFAULT_LABEL = "go_mock_library"
 _MOCKS_GOPATH_LABEL = "_mocks_gopath"
 
 
-def go_mockery(src, importpath, interfaces, **kwargs):
+def go_mockery(name, src, importpath, interfaces, deps=[], **kwargs):
     """Runs Mockery on a Go library
     See https://github.com/vektra/mockery for details
 
     Args:
+        name: The name of the generated go_library
         src: The Go Library to use as a source target
         importpath: The path which will be used in a Go file's import statement
             in order to call the generated mock package
         interfaces: The set of interfaces for which a mocked type will be generated
+        deps: list of bazel dependencies needed by the generated go_library
     """
     mocks_name = kwargs.get("mocks_name", _MOCKS_DEFAULT_LABEL)
-    deps = kwargs.get("deps", [])
 
     go_mockery_without_library(
         name = mocks_name,
@@ -33,7 +34,7 @@ def go_mockery(src, importpath, interfaces, **kwargs):
     )
 
     go_library(
-        name = kwargs.get("name", _LIB_DEFAULT_LABEL),
+        name = name,
         srcs = [mocks_name],
         importpath = importpath,
         deps = deps + [
@@ -77,7 +78,7 @@ def _go_mockery_impl(ctx):
     args =  ["-dir", gopath + "/src/" + ctx.attr.src[GoLibrary].importpath]
     args += ["-outpkg", ctx.attr.outpkg]
     args += ["-output", ctx.outputs.outputs[0].dirname ]
-    args += ["-name", "" + "|".join(ctx.attr.interfaces) + ""]
+    args += ["-name", "|".join(ctx.attr.interfaces)]
     args += ["-case", "underscore"]
 
     _go_tool_run_shell_stdout(
